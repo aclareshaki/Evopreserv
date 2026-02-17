@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evocador Preservación N90 — Cronoguarda + Bendición de Merithra</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #e2e8f0; min-height: 100vh; }
+        
+        .tag-chrono { background: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid #a16207; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+        .tag-flame { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #b91c1c; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+        .tag-synergy { background: rgba(45, 212, 191, 0.15); color: #2dd4bf; border: 1px solid #0f766e; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+        .tag-ysera { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #15803d; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+        .tag-apex { background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid #7c3aed; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+
+        .arrow-step::after { content: '→'; position: absolute; right: -16px; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 1.2rem; font-weight: bold; }
+        .arrow-step:last-child::after { content: ''; }
+
+        .tab-content { display: none; animation: fadeIn 0.3s ease-out; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .nav-btn.active { background: #2dd4bf; color: #0f172a; border-color: #2dd4bf; }
+        .nav-btn.inactive { background: transparent; color: #94a3b8; border-color: #334155; }
+        .nav-btn.inactive:hover { color: #e2e8f0; border-color: #64748b; }
+
+        .ability-card { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+        .ability-card:hover { transform: translateY(-2px); box-shadow: 0 10px 40px -10px rgba(0,0,0,0.3); }
+
+        .moment-badge { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; }
+
+        .ysera-badge { position: absolute; top: 8px; right: 8px; background: linear-gradient(135deg, #15803d, #166534); color: #bbf7d0; padding: 4px 10px; border-radius: 8px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        .abil-icon { width: 1em; height: 1em; vertical-align: middle; margin-right: 2px; border-radius: 2px; }
+        .abil-icon-sm { width: 14px; height: 14px; vertical-align: middle; margin-right: 3px; border-radius: 2px; }
+
+        .hero-selector .hero-opt { transition: all 0.2s; }
+        .hero-selector .hero-opt.active { background: #2dd4bf; color: #0f172a; border-color: #2dd4bf; }
+        .hero-selector .hero-opt:not(.active) { background: transparent; color: #94a3b8; border-color: #334155; }
+        .hero-selector .hero-opt:not(.active):hover { color: #e2e8f0; border-color: #64748b; }
+        .hero-selector .hero-opt.chrono.active { background: #eab308; color: #0f172a; border-color: #a16207; }
+        .hero-selector .hero-opt.flame.active { background: #ef4444; color: white; border-color: #b91c1c; }
+
+        .header-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+
+        [data-hero="chrono"], [data-hero="flame"] { display: revert; }
+        body.hero-flame [data-hero="chrono"] { display: none !important; }
+        body.hero-chrono [data-hero="flame"] { display: none !important; }
+        body.hero-flame .block-chrono { display: none !important; }
+        body.hero-chrono .block-flame { display: none !important; }
+    </style>
+</head>
+<body class="p-4 md:p-8 max-w-6xl mx-auto pb-32 hero-chrono">
+
+    <!-- HEADER -->
+    <header class="mb-6">
+        <!-- Barra superior compacta -->
+        <div class="header-bar border-b border-slate-600/80 pb-4">
+            <h1 class="text-xl md:text-2xl font-black text-white flex items-center gap-2 shrink-0">
+                <i data-lucide="dragon" class="text-teal-400 w-6 h-6"></i>
+                <span>Evocador Pres.</span>
+            </h1>
+            <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="ysera-badge text-[0.6rem] py-1 px-2">Ysera R3</span>
+                <span id="badge-hero" class="tag-chrono text-[0.6rem] py-1 px-2" title="Cronoguarda">Crono</span>
+                <span class="tag-apex text-[0.6rem] py-1 px-2">Merithra</span>
+                <span class="text-[0.6rem] text-slate-500">N90</span>
+            </div>
+            <div class="hero-selector flex gap-0.5 p-0.5 bg-slate-800/80 rounded border border-slate-600">
+                <button onclick="setHero('chrono')" id="hero-btn-chrono" class="hero-opt chrono active rounded px-2 py-1 font-bold border flex items-center gap-1 text-xs" title="Cronoguarda">
+                    <i data-lucide="clock" class="w-4 h-4 shrink-0"></i>
+                    <span>Crono</span>
+                </button>
+                <button onclick="setHero('flame')" id="hero-btn-flame" class="hero-opt flame rounded px-2 py-1 font-bold border flex items-center gap-1 text-xs" title="Moldeallamas">
+                    <i data-lucide="flame" class="w-4 h-4 shrink-0"></i>
+                    <span>Fuego</span>
+                </button>
+            </div>
+            <div class="flex-1 min-w-0"></div>
+            <nav class="flex gap-1 bg-slate-800/80 p-1 rounded-lg border border-slate-600 shrink-0">
+                <button onclick="switchTab('habilidades')" id="btn-habilidades" class="nav-btn active rounded px-2 py-1.5 text-xs font-bold transition-all flex items-center gap-1.5">
+                    <i data-lucide="sparkles" class="w-4 h-4 shrink-0"></i>
+                    <span>Habs</span>
+                </button>
+                <button onclick="switchTab('combos')" id="btn-combos" class="nav-btn inactive rounded px-2 py-1.5 text-xs font-bold transition-all flex items-center gap-1.5">
+                    <i data-lucide="git-branch" class="w-4 h-4 shrink-0"></i>
+                    <span>Combos</span>
+                </button>
+                <button onclick="switchTab('momentos')" id="btn-momentos" class="nav-btn inactive rounded px-2 py-1.5 text-xs font-bold transition-all flex items-center gap-1.5">
+                    <i data-lucide="clock" class="w-4 h-4 shrink-0"></i>
+                    <span>Cuándo</span>
+                </button>
+            </nav>
+        </div>
+        <p id="build-desc" class="text-[0.65rem] text-slate-500 mt-2 leading-tight">Build asumida: <strong>nivel 90</strong>, talentos heroicos <strong>Cronoguarda</strong> completos, <strong>Bendición de Merithra</strong> ápice.</p>
+    </header>
+
+    <!-- PESTAÑA 1: HABILIDADES (con sinergias) -->
+    <div id="tab-habilidades" class="tab-content active">
+        <div class="grid md:grid-cols-2 gap-4">
+            
+            <!-- Abrazo Verde (Verdant Embrace) -->
+            <div class="ability-card bg-slate-800/90 rounded-xl p-5 border border-slate-600/80">
+                <div class="flex gap-4">
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_rescue.jpg" class="w-14 h-14 rounded-lg border-2 border-green-500/60 shrink-0 object-cover" alt="Abrazo Verde">
+                    <div class="flex-1">
+                        <h3 class="font-bold text-white text-lg"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_rescue.jpg" class="abil-icon-sm inline-block mr-1" alt=""> Abrazo Verde</h3>
+                        <p class="text-sm text-slate-300 mt-1">Vuelas hacia un aliado y lo sanas. Aplica <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_rescue.jpg" class="abil-icon-sm" alt="" onerror="this.style.display='none'"> Vínculo vital si tienes el talento.</p>
+                        <div class="mt-3 pt-3 border-t border-slate-600/60">
+                            <p class="text-xs text-slate-500 uppercase font-bold mb-2">Sinergias</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="tag-ysera"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_dreambreath.jpg" class="w-4 h-4 rounded object-cover" alt=""> Llamada de Ysera R3 — Potencia +40% el siguiente Aliento Onírico</span>
+                                <span class="tag-chrono" data-hero="chrono"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_temporalanomaly.jpg" class="w-4 h-4 rounded object-cover" alt=""> Cronoguarda — Estela repite la sanación en tu ruta de vuelo</span>
+                                <span class="tag-flame" data-hero="flame"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_firebreath.jpg" class="w-4 h-4 rounded object-cover" alt=""> Moldeallamas — Consumir Llama detona DoTs de Fuego</span>
+                                <span class="tag-synergy"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_echo.jpg" class="w-4 h-4 rounded object-cover" alt=""> Consumidor de Eco — Usa Eco para burst multibjetivo</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aliento Onírico (Dream Breath) -->
+            <div class="ability-card bg-slate-800/90 rounded-xl p-5 border border-slate-600/80">
+                <div class="flex gap-4">
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_dreambreath.jpg" class="w-14 h-14 rounded-lg border-2 border-green-500/60 shrink-0 object-cover" alt="Aliento Onírico">
+                    <div class="flex-1">
+                        <h3 class="font-bold text-white text-lg"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_dreambreath.jpg" class="abil-icon-sm inline-block mr-1" alt=""> Aliento Onírico</h3>
+                        <p class="text-sm text-slate-300 mt-1">Sana en cono (5+ objetivos). Rango 1 = más HoT, Rango 3 = más instantáneo.</p>
+                        <div class="mt-3 pt-3 border-t border-slate-600/60">
+                            <p class="text-xs text-slate-500 uppercase font-bold mb-2">Sinergias</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="tag-ysera"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_dreambreath.jpg" class="w-4 h-4 rounded object-cover" alt=""> Llamada de Ysera — Siempre potenciado tras Abrazo Verde (+40%)</span>
+                                <span class="tag-apex"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_dreambreath.jpg" class="w-4 h-4 rounded object-cover" alt=""> Bendición de Merithra — Proc burst + rebote</span>
+                                <span class="tag-synergy"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_echo.jpg" class="w-4 h-4 rounded object-cover" alt=""> Eco — Consumir Eco propaga a todos con buff</span>
+                                <span class="tag-flame" data-hero="flame"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_livingflame.jpg" class="w-4 h-4 rounded object-cover" alt=""> Consumir Llama — Abrazo Verde/Flor Esmeralda sobre Aliento Onírico desencadena burst</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Anomalía Temporal -->
+            <div class="ability-card bg-slate-800/90 rounded-xl p-5 border border-slate-600/80">
+                <div class="flex gap-4">
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_temporalanomaly.jpg" class="w-14 h-14 rounded-lg border-2 border-yellow-500/60 shrink-0 object-cover" alt="Anomalía Temporal">
+                    <div class="flex-1">
+                        <h3 class="font-bold text-white text-lg"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_temporalanomaly.jpg" class="abil-icon-sm inline-block mr-1" alt=""> Anomalía Temporal</h3>
+                        <p class="text-sm text-slate-300 mt-1">Lanza orbe que aplica escudos y, con Esfera resonante, Eco a los 5 primeros.</p>
+                        <div class="mt-3 pt-3 border-t border-slate-600/60">
+                            <p class="text-xs text-slate-500 uppercase font-bold mb-2">Sinergias</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="tag-synergy"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_temporalanomaly.jpg" class="w-4 h-4 rounded object-cover" alt=""> Esfera resonante — Aplica Eco automáticamente</span>
+                                <span class="tag-chrono" data-hero="chrono"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_temporalanomaly.jpg" class="w-4 h-4 rounded object-cover" alt=""> Adepto de Nozdormu — Reduce maná y CD (Midnight)</span>
+                                <span class="tag-chrono" data-hero="chrono"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_tipthescales.jpg" class="w-4 h-4 rounded object-cover" alt=""> Hilos del destino — Esencia durante Estallido temporal: aliados hacen eco 15%</span>
+                                <span class="tag-synergy"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_stasis.jpg" class="w-4 h-4 rounded object-cover" alt=""> Estasis — Siempre al FINAL del guardado (para no consumir Ecos)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Eco -->
+            <div class="ability-card bg-slate-800/90 rounded-xl p-5 border border-slate-600/80">
+                <div class="flex gap-4">
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_echo.jpg" class="w-14 h-14 rounded-lg border-2 border-teal-500/60 shrink-0">
+                    <div class="flex-1">
+                        <h3 class="font-bold text-white text-lg"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_echo.jpg" class="abil-icon-sm inline-block mr-1" alt=""> Eco</h3>
+                        <p class="text-sm text-slate-300 mt-1">2 esencia. Coloca buff; el próximo hechizo de sanación se replica en quienes tengan Eco.</p>
+                        <div class="mt-3 pt-3 border-t border-slate-600/60">
+                            <p class="text-xs text-slate-500 uppercase font-bold mb-2">Sinergias</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="tag-synergy"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_echo.jpg" class="w-4 h-4 rounded object-cover" alt=""> Ecos gemelos — Tras Flor Esmeralda, el siguiente Eco aplica a 1 objetivo extra</span>
+                                <span class="tag-chrono" data-hero="chrono"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_tipthescales.jpg" class="w-4 h-4 rounded object-cover" alt=""> Hilos del destino — Durante Estallido temporal, Eco puede provocar eco 15% en aliados cercanos</span>
+                                <span class="tag-synergy"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_reversion.jpg" class="w-4 h-4 rounded object-cover" alt=""> Reversión — Consumidor principal (HoT + Período de gracia)</span>
+                                <span class="tag-apex"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_dreambreath.jpg" class="w-4 h-4 rounded object-cover" alt=""> Bendición de Merithra — Facultades de esencia (Eco, Flor Esmeralda) tienen 20% de mejorar tu próxima Reversión; consumir para burst masivo (flor 250% p. + 4 aliados)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reversión -->
+            <div class="ability-card bg-slate-800/90 rounded-xl p-5 border border-slate-600/80">
+                <div class="flex gap-4">
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_reversion.jpg" class="w-14 h-14 rounded-lg border-2 border-teal-500/60 shrink-0">
+                    <div class="flex-1">
+                        <h3 class="font-bold text-white text-lg"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_reversion.jpg" class="abil-icon-sm inline-block mr-1" alt=""> Reversión</h3>
+                        <p class="text-sm text-slate-300 mt-1">HoT en un objetivo. Críticos extienden hasta 12s. Consumidor de Eco más usado.</p>
+                        <div class="mt-3 pt-3 border-t border-slate-600/60">
+                            <p class="text-xs text-slate-500 uppercase font-bold mb-2">Sinergias</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="tag-synergy"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_reversion.jpg" class="w-4 h-4 rounded object-cover" alt=""> Hora dorada — Más sanación si el objetivo recibió daño reciente</span>
+                                <span class="tag-synergy"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_reversion.jpg" class="w-4 h-4 rounded object-cover" alt=""> Período de gracia — Bonus de sanación pasiva</span>
+                                <span class="tag-apex"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_dreambreath.jpg" class="w-4 h-4 rounded object-cover" alt=""> Bendición de Merithra — 20% proc: Reversión se convierte en flor de vida (250% p. a objetivo + 4 aliados en 30 m); consumir con Eco para burst multibjetivo</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flor Esmeralda -->
+            <div class="ability-card bg-slate-800/90 rounded-xl p-5 border border-slate-600/80">
+                <div class="flex gap-4">
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_emeraldblossom.jpg" class="w-14 h-14 rounded-lg border-2 border-emerald-500/60 shrink-0">
+                    <div class="flex-1">
+                        <h3 class="font-bold text-white text-lg"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_emeraldblossom.jpg" class="abil-icon-sm inline-block mr-1" alt=""> Flor Esmeralda</h3>
+                        <p class="text-sm text-slate-300 mt-1">3 esencia. Sana objetivo + área. En Midnight ya NO consume Eco.</p>
+                        <div class="mt-3 pt-3 border-t border-slate-600/60">
+                            <p class="text-xs text-slate-500 uppercase font-bold mb-2">Sinergias</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="tag-synergy"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_echo.jpg" class="w-4 h-4 rounded object-cover" alt=""> Ecos gemelos — Tras Flor Esmeralda, tu siguiente Eco aplica a 1 objetivo extra</span>
+                                <span class="tag-synergy"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_emeraldblossom.jpg" class="w-4 h-4 rounded object-cover" alt=""> Esencia explosiva — Consumir con Flor Esmeralda es muy eficiente</span>
+                                <span class="tag-chrono" data-hero="chrono"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_tipthescales.jpg" class="w-4 h-4 rounded object-cover" alt=""> Hilos del destino — Durante Estallido temporal, Flor Esmeralda puede provocar eco 15% en aliados</span>
+                                <span class="tag-flame" data-hero="flame"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_livingflame.jpg" class="w-4 h-4 rounded object-cover" alt=""> Consumir Llama — Sobre Aliento Onírico detona burst</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Llama Viva -->
+            <div class="ability-card bg-slate-800/90 rounded-xl p-5 border border-slate-600/80">
+                <div class="flex gap-4">
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_livingflame.jpg" class="w-14 h-14 rounded-lg border-2 border-red-500/60 shrink-0">
+                    <div class="flex-1">
+                        <h3 class="font-bold text-white text-lg"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_livingflame.jpg" class="abil-icon-sm inline-block mr-1" alt=""> Llama viviente</h3>
+                        <p class="text-sm text-slate-300 mt-1">Filler daño/sanación. Probabilidad de generar Esencia explosiva.</p>
+                        <div class="mt-3 pt-3 border-t border-slate-600/60">
+                            <p class="text-xs text-slate-500 uppercase font-bold mb-2">Sinergias</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="tag-flame"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_firebreath.jpg" class="w-4 h-4 rounded object-cover" alt=""> Salto de llamas — Tras Aliento de Fuego, Llama viviente golpea múltiples objetivos</span>
+                                <span class="tag-chrono" data-hero="chrono"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_livingflame.jpg" class="w-4 h-4 rounded object-cover" alt=""> Llama Crono — Repite 15% daño/sanación de últimos 5s como arcano (muy notable en Midnight sin Spiritbloom)</span>
+                                <span class="tag-synergy"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_stasis.jpg" class="w-4 h-4 rounded object-cover" alt=""> Llama interior — Tras Estasis o Vuelo onírico, +100% prob. Esencia explosiva</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aliento de Fuego -->
+            <div class="ability-card bg-slate-800/90 rounded-xl p-5 border border-slate-600/80">
+                <div class="flex gap-4">
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_firebreath.jpg" class="w-14 h-14 rounded-lg border-2 border-red-500/60 shrink-0">
+                    <div class="flex-1">
+                        <h3 class="font-bold text-white text-lg"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_firebreath.jpg" class="abil-icon-sm inline-block mr-1" alt=""> Aliento de Fuego</h3>
+                        <p class="text-sm text-slate-300 mt-1">Daño en cono. Mantener en CD para generar Esencia explosiva y Salto de llamas.</p>
+                        <div class="mt-3 pt-3 border-t border-slate-600/60">
+                            <p class="text-xs text-slate-500 uppercase font-bold mb-2">Sinergias</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="tag-flame" data-hero="flame"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_firebreath.jpg" class="w-4 h-4 rounded object-cover" alt=""> Salto de llamas — Llama viviente siguiente golpea N objetivos según rango</span>
+                                <span class="tag-flame" data-hero="flame"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_livingflame.jpg" class="w-4 h-4 rounded object-cover" alt=""> Brasas — Llama viviente aplica DoT (Moldeallamas)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stasis -->
+            <div class="ability-card bg-slate-800/90 rounded-xl p-5 border border-slate-600/80">
+                <div class="flex gap-4">
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_stasis.jpg" class="w-14 h-14 rounded-lg border-2 border-purple-500/60 shrink-0">
+                    <div class="flex-1">
+                        <h3 class="font-bold text-white text-lg"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_stasis.jpg" class="abil-icon-sm inline-block mr-1" alt=""> Estasis</h3>
+                        <p class="text-sm text-slate-300 mt-1">Guarda los próximos 3 hechizos de sanación. Al reactivar, se repiten en el mismo orden.</p>
+                        <div class="mt-3 pt-3 border-t border-slate-600/60">
+                            <p class="text-xs text-slate-500 uppercase font-bold mb-2">Sinergias</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="tag-synergy"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_livingflame.jpg" class="w-4 h-4 rounded object-cover" alt=""> Llama interior — Tras Estasis, +HoT y +Esencia explosiva</span>
+                                <span class="tag-synergy">Orden clave: [<img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_emeraldblossom.jpg" class="w-4 h-4 rounded inline object-cover" alt=""> Flor Esmeralda o <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_dreambreath.jpg" class="w-4 h-4 rounded inline object-cover" alt=""> Aliento Onírico] → [<img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_rescue.jpg" class="w-4 h-4 rounded inline object-cover" alt=""> Abrazo Verde] → <strong><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_temporalanomaly.jpg" class="w-4 h-4 rounded inline object-cover" alt=""> Anomalía Temporal AL FINAL</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cooldowns principales -->
+            <div class="ability-card bg-slate-800/90 rounded-xl p-5 border border-slate-600/80 md:col-span-2">
+                <h3 class="font-bold text-slate-400 mb-3">Cooldowns principales</h3>
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div class="flex gap-3 p-3 bg-slate-900/50 rounded-lg">
+                        <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_rewind.jpg" class="w-10 h-10 rounded border border-slate-600 object-cover" alt="">
+                        <div>
+                            <p class="font-bold text-white"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_rewind.jpg" class="abil-icon-sm inline-block mr-1" alt=""> Rebobinar</p>
+                            <p class="text-xs text-slate-400">Revierte daño de los últimos 5s. Usar tras burst pesado.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 p-3 bg-slate-900/50 rounded-lg">
+                        <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_tipthescales.jpg" class="w-10 h-10 rounded border border-yellow-500/50 object-cover" alt="">
+                        <div>
+                            <p class="font-bold text-white"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_tipthescales.jpg" class="abil-icon-sm inline-block mr-1" alt=""> Inclinar la balanza</p>
+                            <p class="text-xs text-slate-400"><span data-hero="chrono">+ Cronoguarda: Estallido temporal (celeridad, velocidad, CDR hasta 40% por 20s). Chronoboon reduce CD 30s.</span><span data-hero="flame">+ Moldeallamas: empoder instantáneo máx. para Aliento Onírico/Aliento de Fuego.</span></p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 p-3 bg-slate-900/50 rounded-lg">
+                        <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_hoverblack.jpg" class="w-10 h-10 rounded border border-slate-600 object-cover" alt="">
+                        <div>
+                            <p class="font-bold text-white"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_hoverblack.jpg" class="abil-icon-sm inline-block mr-1" alt=""> Céfiro</p>
+                            <p class="text-xs text-slate-400">-20% daño en área (tú + 4 aliados cercanos). Solo daño AoE.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PESTAÑA 2: COMBOS Y ROTACIONES -->
+    <div id="tab-combos" class="tab-content">
+        <div class="bg-emerald-900/20 border border-emerald-600/40 p-4 rounded-xl mb-6">
+            <p class="text-sm text-emerald-200"><strong>Build N90 — Bendición de Merithra ápice:</strong> Flor de Espíritu eliminada en Midnight. Prioridad: <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_temporalanomaly.jpg" class="abil-icon-sm inline-block" alt=""> Anomalía Temporal + <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_dreambreath.jpg" class="abil-icon-sm inline-block" alt=""> Aliento Onírico. <span data-hero="chrono"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_tipthescales.jpg" class="abil-icon-sm inline-block" alt=""> Inclinar la balanza lo más posible (Chronoboon).</span><span data-hero="flame"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_firebreath.jpg" class="abil-icon-sm inline-block" alt=""> Aliento de Fuego en CD (Salto de llamas, Esencia explosiva).</span> Facultades de esencia pueden mejorar Reversión a Bendición de Merithra (20%). Llamada de Ysera R3 activa.</p>
+        </div>
+
+        <div class="space-y-8">
+            
+            <!-- Consumo Esencia explosiva (ambas) -->
+            <div class="bg-slate-800 rounded-xl p-6 border border-slate-600">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Consumo de Esencia explosiva</h3>
+                        <p class="text-sm text-slate-400">Priorizar Flor Esmeralda con proc de Esencia explosiva para activar Ecos gemelos (Eco + Flor en uno). Alternativa: Eco si necesitas ramp rápido.</p>
+                    </div>
+                    <span class="moment-badge px-2 py-1 rounded bg-teal-900/50 text-teal-300">General</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 bg-slate-900/50 p-4 rounded-lg border border-slate-700">
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_emeraldblossom.jpg" class="w-8 h-8 rounded border border-emerald-500" alt="">
+                    <span class="text-sm text-slate-300">Esencia explosiva → Flor Esmeralda (Ecos gemelos)</span>
+                    <span class="text-slate-600">|</span>
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_echo.jpg" class="w-8 h-8 rounded border border-teal-500" alt="">
+                    <span class="text-sm text-slate-300">Eco si ramp urgente</span>
+                </div>
+                <div class="mt-4 p-3 bg-slate-900/30 rounded-lg border-l-4 border-l-teal-500">
+                    <p class="text-xs font-bold text-teal-400 uppercase mb-2">Icy Veins</p>
+                    <p class="text-sm text-slate-300">Flor Esmeralda con Esencia explosiva + Ecos gemelos efectivamente te da Eco y Flor Esmeralda a la vez. Mejor uso en la mayoría de situaciones.</p>
+                </div>
+            </div>
+
+            <!-- Rampa estándar AoE (Ysera) -->
+            <div class="bg-slate-800 rounded-xl p-6 border border-slate-600">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Rampa estándar AoE (con Ysera R3)</h3>
+                        <p class="text-sm text-slate-400">Secuencia principal para daño de banda/grupo.</p>
+                    </div>
+                    <span class="moment-badge px-2 py-1 rounded bg-emerald-900/50 text-emerald-300">Frecuencia: Alta</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 bg-slate-900/50 p-4 rounded-lg border border-slate-700">
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_temporalanomaly.jpg" class="w-8 h-8 rounded border border-yellow-500/50" alt="">
+                    <span class="text-sm text-slate-300">1. Anomalía Temporal</span>
+                    <span class="text-slate-600">→</span>
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_rescue.jpg" class="w-8 h-8 rounded border border-teal-500/50" alt="">
+                    <span class="text-sm text-slate-300">2. Abrazo Verde</span>
+                    <span class="text-slate-600">→</span>
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_dreambreath.jpg" class="w-8 h-8 rounded border border-green-500/50" alt="">
+                    <span class="text-sm text-slate-300">3. Aliento Onírico</span>
+                </div>
+                <div class="mt-4 p-3 bg-slate-900/30 rounded-lg border-l-4 border-l-teal-500">
+                    <p class="text-xs font-bold text-teal-400 uppercase mb-2">Para novatos</p>
+                    <p class="text-sm text-slate-300"><strong>¿Por qué se usa?</strong> Es tu secuencia principal cuando varios aliados reciben daño (raid, mazmorra, grupo).</p>
+                    <p class="text-sm text-slate-300 mt-2"><strong>¿Qué hace?</strong> Primero aplicas escudos y Eco con Anomalía Temporal. Luego Abrazo Verde potencia +40% tu siguiente Aliento Onírico. Por último, Aliento Onírico detona con mucha sanación en área (Rango 1 = más HoT continuo, Rango 3 = más burst instantáneo).</p>
+                </div>
+            </div>
+
+            <!-- Setup Stasis (actualizado Midnight) -->
+            <div class="bg-slate-800 rounded-xl p-6 border border-slate-600">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Setup Estasis (Midnight)</h3>
+                        <p class="text-sm text-slate-400">Qué guardar. Anomalía SIEMPRE al final.</p>
+                    </div>
+                    <span class="moment-badge px-2 py-1 rounded bg-purple-900/50 text-purple-300">Preparación</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 bg-slate-900/50 p-4 rounded-lg border border-slate-700">
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_stasis.jpg" class="w-8 h-8 rounded border border-slate-600" alt="">
+                    <span class="text-sm text-slate-300">Activar</span>
+                    <span class="text-slate-600">→</span>
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_emeraldblossom.jpg" class="w-8 h-8 rounded border border-emerald-500" alt="">
+                    <span class="text-sm text-slate-300">1. Flor Esmeralda</span>
+                    <span class="text-slate-600">→</span>
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_dreambreath.jpg" class="w-8 h-8 rounded border border-green-500" alt="">
+                    <span class="text-sm text-slate-300">2. Aliento Onírico</span>
+                    <span class="text-slate-600">→</span>
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_temporalanomaly.jpg" class="w-8 h-8 rounded border border-yellow-500" alt="">
+                    <span class="text-sm text-slate-300">3. Anomalía Temporal (FINAL)</span>
+                </div>
+                <div class="mt-4 p-3 bg-slate-900/30 rounded-lg border-l-4 border-l-purple-500">
+                    <p class="text-xs font-bold text-purple-400 uppercase mb-2">Para novatos</p>
+                    <p class="text-sm text-slate-300"><strong>¿Por qué se usa?</strong> Para tener un burst de sanación guardado y soltarlo cuando llegue el daño pesado.</p>
+                    <p class="text-sm text-slate-300 mt-2"><strong>¿Qué hace?</strong> Activas Estasis, guardas 3 hechizos en ese orden, y al reactivar se repiten automáticamente. La Anomalía va al final para no consumir los Ecos que genera.</p>
+                </div>
+                <p class="mt-3 text-xs text-slate-400 italic flex items-center gap-1"><i data-lucide="lightbulb" class="w-3 h-3"></i> Alternativa: <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_rescue.jpg" class="abil-icon-sm inline" alt=""> Abrazo Verde en lugar de <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_emeraldblossom.jpg" class="abil-icon-sm inline" alt=""> Flor Esmeralda si necesitas burst en un objetivo concreto.</p>
+            </div>
+
+            <!-- Stasis triple Anomalía (pre-pull) -->
+            <div class="bg-slate-800 rounded-xl p-6 border border-slate-600">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Estasis Pre-Pull (Escudos masivos)</h3>
+                        <p class="text-sm text-slate-400">Guardar 2 Anomalías, lanzar la 3ª al hacer pull.</p>
+                    </div>
+                    <span class="moment-badge px-2 py-1 rounded bg-amber-900/50 text-amber-300">Raid / Jefe</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 bg-slate-900/50 p-4 rounded-lg border border-slate-700">
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_stasis.jpg" class="w-8 h-8 rounded border border-slate-600" alt="">
+                    <span class="text-sm text-slate-300">Estasis</span>
+                    <span class="text-slate-600">→</span>
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_temporalanomaly.jpg" class="w-8 h-8 rounded border border-yellow-500" alt="">
+                    <span class="text-sm text-slate-300">Anomalía Temporal × 3 (esperar pull para la 3ª)</span>
+                </div>
+                <div class="mt-4 p-3 bg-slate-900/30 rounded-lg border-l-4 border-l-amber-500">
+                    <p class="text-xs font-bold text-amber-400 uppercase mb-2">Para novatos</p>
+                    <p class="text-sm text-slate-300"><strong>¿Por qué se usa?</strong> Para empezar el encuentro con escudos masivos sobre la banda o el grupo.</p>
+                    <p class="text-sm text-slate-300 mt-2"><strong>¿Qué hace?</strong> Activas Estasis antes del pull, guardas 2 Anomalías, y lanzas la 3ª justo al hacer pull. Al reactivar Estasis, se repiten las 3 y todo el mundo tiene escudo.</p>
+                </div>
+            </div>
+
+            <!-- Cronoguarda: Tip the Scales + ramp -->
+            <div class="bg-slate-800 rounded-xl p-6 border border-slate-600 block-chrono">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Cronoguarda — Inclinar la balanza + Rampa</h3>
+                        <p class="text-sm text-slate-400">Estallido temporal (celeridad, velocidad, CDR hasta 40%). Chronoboon reduce CD 30s. Adepto de Nozdormu potencia Anomalía. <strong>Durante Estallido temporal:</strong> priorizar habilidades de esencia (Eco, Flor Esmeralda) para Hilos del destino (eco 15% en aliados).</p>
+                    </div>
+                    <span class="tag-chrono">Cronoguarda</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 bg-slate-900/50 p-4 rounded-lg border border-slate-700">
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_tipthescales.jpg" class="w-8 h-8 rounded border border-yellow-500" alt="">
+                    <span class="text-sm text-slate-300">Inclinar la balanza</span>
+                    <span class="text-slate-600">→</span>
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_temporalanomaly.jpg" class="w-8 h-8 rounded border border-yellow-500" alt="">
+                    <span class="text-sm text-slate-300">Anomalía Temporal</span>
+                    <span class="text-slate-600">→</span>
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_echo.jpg" class="w-8 h-8 rounded border border-teal-500" alt="">
+                    <span class="text-sm text-slate-300">Ecos (máx.)</span>
+                    <span class="text-slate-600">→</span>
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_emeraldblossom.jpg" class="w-8 h-8 rounded border border-emerald-500" alt="">
+                    <span class="text-sm text-slate-300">Flor Esmeralda (Ecos gemelos)</span>
+                    <span class="text-slate-600">→</span>
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_rescue.jpg" class="w-8 h-8 rounded border border-green-500" alt="">
+                    <span class="text-sm text-slate-300">Abrazo Verde</span>
+                    <span class="text-slate-600">→</span>
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_dreambreath.jpg" class="w-8 h-8 rounded border border-green-500" alt="">
+                    <span class="text-sm text-slate-300">Aliento Onírico R1</span>
+                </div>
+                <div class="mt-4 p-3 bg-slate-900/30 rounded-lg border-l-4 border-l-yellow-600">
+                    <p class="text-xs font-bold text-yellow-400 uppercase mb-2">Para novatos</p>
+                    <p class="text-sm text-slate-300"><strong>¿Por qué se usa?</strong> Usar Inclinar la balanza justo antes de burst de sanación maximiza Estallido temporal. Chronoboon permite usos frecuentes.</p>
+                    <p class="text-sm text-slate-300 mt-2"><strong>¿Qué hace?</strong> Estallido temporal da celeridad y CDR frontloaded. Durante ese buff, las habilidades de esencia (Eco, Flor Esmeralda) tienen probabilidad de hacer eco 15% en aliados cercanos (Hilos del destino). Consumir Esencia explosiva con Flor Esmeralda activa Ecos gemelos.</p>
+                </div>
+            </div>
+
+            <!-- Bendición de Merithra ramp (ambas builds) -->
+            <div class="bg-slate-800 rounded-xl p-6 border border-slate-600">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Bendición de Merithra — Rampa burst</h3>
+                        <p class="text-sm text-slate-400"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_dreambreath.jpg" class="abil-icon-sm inline" alt=""> Aliento Onírico y facultades de esencia (Eco, Flor Esmeralda) tienen 20% de mejorar tu próxima Reversión. Consumir Ecos con Reversión para burst masivo (flor 250% p. a objetivo + 4 aliados en 30 m).</p>
+                    </div>
+                    <span class="tag-apex">Ápice</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 bg-slate-900/50 p-4 rounded-lg border border-slate-700">
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_dreambreath.jpg" class="w-8 h-8 rounded border border-green-500" alt="">
+                    <span class="text-sm text-slate-300">Aliento Onírico</span>
+                    <span class="text-slate-600">→</span>
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_echo.jpg" class="w-8 h-8 rounded border border-teal-500" alt="">
+                    <span class="text-sm text-slate-300">Máx. Ecos</span>
+                    <span class="text-slate-600">→</span>
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_reversion.jpg" class="w-8 h-8 rounded border border-purple-500" alt="" onerror="this.src='https://wow.zamimg.com/images/wow/icons/large/ability_evoker_dreambreath.jpg'">
+                    <span class="text-sm text-slate-300">Consumir con Bendición de Merithra</span>
+                </div>
+                <div class="mt-4 p-3 bg-slate-900/30 rounded-lg border-l-4 border-l-purple-500">
+                    <p class="text-xs font-bold text-purple-400 uppercase mb-2">Para novatos</p>
+                    <p class="text-sm text-slate-300"><strong>¿Por qué se usa?</strong> Para burst masivo cuando Aliento Onírico proc Bendición de Merithra.</p>
+                    <p class="text-sm text-slate-300 mt-2"><strong>¿Qué hace?</strong> Aliento Onírico garantiza el proc. Luego aplicas el máximo de Ecos posible y consumes con Bendición de Merithra (Reversión mejorada) para sanación masiva que rebota a varios.</p>
+                </div>
+            </div>
+
+            <!-- Moldeallamas: Consumir Llama -->
+            <div class="bg-slate-800 rounded-xl p-6 border border-slate-600 block-flame">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Moldeallamas — Consumir llama</h3>
+                        <p class="text-sm text-slate-400">Maximizar daño y sanación detonando DoTs de fuego.</p>
+                    </div>
+                    <span class="tag-flame">Moldeallamas</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 bg-slate-900/50 p-4 rounded-lg border border-slate-700">
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_firebreath.jpg" class="w-8 h-8 rounded border border-red-500" alt="">
+                    <span class="text-sm text-slate-300">Aliento de Fuego</span>
+                    <span class="text-slate-600">→</span>
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_livingflame.jpg" class="w-8 h-8 rounded border border-red-500" alt="">
+                    <span class="text-sm text-slate-300">Llama viviente (DoT)</span>
+                    <span class="text-slate-600">→</span>
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_rescue.jpg" class="w-8 h-8 rounded border border-red-500" alt="">
+                    <span class="text-sm text-slate-300">Abrazo Verde (Consumir, detona DoTs)</span>
+                </div>
+                <div class="mt-4 p-3 bg-slate-900/30 rounded-lg border-l-4 border-l-red-600">
+                    <p class="text-xs font-bold text-red-400 uppercase mb-2">Para novatos</p>
+                    <p class="text-sm text-slate-300"><strong>¿Por qué se usa?</strong> Para maximizar daño y sanación cuando usas Moldeallamas.</p>
+                    <p class="text-sm text-slate-300 mt-2"><strong>¿Qué hace?</strong> Aliento de Fuego y Llama viviente aplican DoTs. Abrazo Verde con Consumir llama detona esos DoTs, causando burst de daño y sanación extra.</p>
+                </div>
+            </div>
+
+            <!-- Moldeallamas: Salto de llamas -->
+            <div class="bg-slate-800 rounded-xl p-6 border border-slate-600 block-flame">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Moldeallamas — Salto de llamas</h3>
+                        <p class="text-sm text-slate-400">Aliento de Fuego hace que la siguiente Llama viviente golpee N objetivos. Forma fiable de generar 1–2 Esencia explosiva y sanar/dañar múltiples.</p>
+                    </div>
+                    <span class="tag-flame">Moldeallamas</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 bg-slate-900/50 p-4 rounded-lg border border-slate-700">
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_firebreath.jpg" class="w-8 h-8 rounded border border-red-500" alt="">
+                    <span class="text-sm text-slate-300">Aliento de Fuego R3</span>
+                    <span class="text-slate-600">→</span>
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_livingflame.jpg" class="w-8 h-8 rounded border border-red-500" alt="">
+                    <span class="text-sm text-slate-300">Llama viviente (múltiples objetivos + Esencia explosiva)</span>
+                </div>
+                <div class="mt-4 p-3 bg-slate-900/30 rounded-lg border-l-4 border-l-red-600">
+                    <p class="text-xs font-bold text-red-400 uppercase mb-2">Para novatos</p>
+                    <p class="text-sm text-slate-300"><strong>¿Por qué se usa?</strong> Mantener Aliento de Fuego en CD genera Esencia explosiva y Salto de llamas. Muy valioso en emergencias (Icy Veins).</p>
+                    <p class="text-sm text-slate-300 mt-2"><strong>¿Qué hace?</strong> Tras Aliento de Fuego a rango máximo, tu siguiente Llama viviente golpea varios enemigos/aliados según el rango usado.</p>
+                </div>
+            </div>
+
+            <!-- Moldeallamas M+: Legacy of the Lifebinder -->
+            <div class="bg-slate-800 rounded-xl p-6 border border-slate-600 block-flame">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Moldeallamas M+ — Doble Aliento Onírico</h3>
+                        <p class="text-sm text-slate-400">Legacy of the Lifebinder da 2 cargas de Aliento Onírico. Usar ambos en ventanas de daño pesado cuando el grupo está apilado.</p>
+                    </div>
+                    <span class="tag-flame">Moldeallamas M+</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 bg-slate-900/50 p-4 rounded-lg border border-slate-700">
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_dreambreath.jpg" class="w-8 h-8 rounded border border-green-500" alt="">
+                    <span class="text-sm text-slate-300">Aliento Onírico R1 (HoT continuo)</span>
+                    <span class="text-slate-600">/</span>
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_dreambreath.jpg" class="w-8 h-8 rounded border border-green-500" alt="">
+                    <span class="text-sm text-slate-300">Aliento Onírico R3 (burst)</span>
+                    <span class="text-slate-600">→</span>
+                    <span class="text-sm text-slate-300">Segunda carga según demanda</span>
+                </div>
+                <div class="mt-4 p-3 bg-slate-900/30 rounded-lg border-l-4 border-l-red-600">
+                    <p class="text-xs font-bold text-red-400 uppercase mb-2">Para novatos</p>
+                    <p class="text-sm text-slate-300"><strong>¿Por qué se usa?</strong> Sin Spiritbloom en Midnight, 2 cargas de Aliento cubren huecos de sanación (Icy Veins).</p>
+                    <p class="text-sm text-slate-300 mt-2"><strong>¿Qué hace?</strong> R1 para HoT pasivo, R3 para burst. Flexibilidad para daño sostenido o picos.</p>
+                </div>
+            </div>
+
+            <!-- Mythic+ Emerald Blossom ramp -->
+            <div class="bg-slate-800 rounded-xl p-6 border border-slate-600">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Mythic+ — Flor Esmeralda ramp (12.0.1)</h3>
+                        <p class="text-sm text-slate-400">Flor Esmeralda no consume Eco en Midnight. <span data-hero="flame">Moldeallamas: Legacy of the Lifebinder (2 cargas Aliento Onírico), Lifecinders (escamas en aliado).</span><span data-hero="chrono">Cronoguarda: Llama Crono muy útil cuando falta esencia.</span></p>
+                    </div>
+                    <span class="moment-badge px-2 py-1 rounded bg-emerald-900/50 text-emerald-300">M+</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 bg-slate-900/50 p-4 rounded-lg border border-slate-700">
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_temporalanomaly.jpg" class="w-8 h-8 rounded border border-yellow-500" alt="">
+                    <span class="text-sm text-slate-300">Anomalía Temporal</span>
+                    <span class="text-slate-600">→</span>
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_emeraldblossom.jpg" class="w-8 h-8 rounded border border-emerald-500" alt="">
+                    <span class="text-sm text-slate-300">Flor Esmeralda</span>
+                    <span class="text-slate-600">→</span>
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_reversion.jpg" class="w-8 h-8 rounded border border-teal-500" alt="">
+                    <span class="text-sm text-slate-300">Reversión</span>
+                    <span class="text-slate-600">/</span>
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_echo.jpg" class="w-8 h-8 rounded border border-teal-500" alt="">
+                    <span class="text-sm text-slate-300">Eco</span>
+                    <span class="text-slate-600">→</span>
+                    <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_rescue.jpg" class="w-8 h-8 rounded border border-green-500" alt="">
+                    <span class="text-sm text-slate-300">Abrazo Verde (objetivo bajo)</span>
+                </div>
+                <div class="mt-4 p-3 bg-slate-900/30 rounded-lg border-l-4 border-l-emerald-600">
+                    <p class="text-xs font-bold text-emerald-400 uppercase mb-2">Para novatos</p>
+                    <p class="text-sm text-slate-300"><strong>¿Por qué se usa?</strong> Prioridad en Mythic+ cuando varios reciben daño y Flor Esmeralda no consume Eco.</p>
+                    <p class="text-sm text-slate-300 mt-2"><strong>¿Qué hace?</strong> Anomalía para escudos y Eco. Flor Esmeralda sana en área. Reversión o Eco mantienen HoTs. Abrazo Verde para burst en un objetivo concreto que esté bajo.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PESTAÑA 3: ¿QUÉ HACER CUÁNDO? -->
+    <div id="tab-momentos" class="tab-content">
+        <p class="text-slate-400 text-sm mb-6">Guía para saber qué priorizar en cada momento de la batalla como sanador.</p>
+        
+        <div class="space-y-6">
+            <div class="bg-slate-800/90 rounded-xl p-5 border-l-4 border-l-amber-500">
+                <h4 class="font-bold text-amber-200 flex items-center gap-2"><i data-lucide="sunrise" class="w-4 h-4"></i> Pre-pull / Antes del daño</h4>
+                <ul class="mt-2 text-sm text-slate-300 space-y-1 list-disc list-inside">
+                    <li><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_stasis.jpg" class="abil-icon-sm inline" alt=""> Estasis con 2 <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_temporalanomaly.jpg" class="abil-icon-sm inline" alt=""> Anomalías si vas a pre-pull; 3ª al hacer pull.</li>
+                    <li><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_temporalanomaly.jpg" class="abil-icon-sm inline" alt=""> Anomalía Temporal 8–10s antes de que llegue el daño.</li>
+                    <li>Aplicar <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_echo.jpg" class="abil-icon-sm inline" alt=""> Ecos a objetivos que recibirán burst.</li>
+                </ul>
+            </div>
+
+            <div class="bg-slate-800/90 rounded-xl p-5 border-l-4 border-l-red-500">
+                <h4 class="font-bold text-red-200 flex items-center gap-2"><i data-lucide="flame" class="w-4 h-4"></i> Daño de banda / AoE pesado</h4>
+                <ul class="mt-2 text-sm text-slate-300 space-y-1 list-disc list-inside">
+                    <li>Rampa Ysera: <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_temporalanomaly.jpg" class="abil-icon-sm inline" alt=""> Anomalía → <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_rescue.jpg" class="abil-icon-sm inline" alt=""> Abrazo Verde → <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_dreambreath.jpg" class="abil-icon-sm inline" alt=""> Aliento Onírico (R1 para HoT, R3 para burst).</li>
+                    <li>Reactivar <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_stasis.jpg" class="abil-icon-sm inline" alt=""> Estasis cuando llegue el daño si lo tenías preparado.</li>
+                    <li><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_reversion.jpg" class="abil-icon-sm inline" alt=""> Reversión para consumir Ecos y mantener HoTs; <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_dreambreath.jpg" class="abil-icon-sm inline" alt=""> si proc Bendición de Merithra (20%), consumir para flor de vida multibjetivo.</li>
+                </ul>
+            </div>
+
+            <div class="bg-slate-800/90 rounded-xl p-5 border-l-4 border-l-teal-500">
+                <h4 class="font-bold text-teal-200 flex items-center gap-2"><i data-lucide="heart" class="w-4 h-4"></i> Daño monobjetivo / Tanque bajo</h4>
+                <ul class="mt-2 text-sm text-slate-300 space-y-1 list-disc list-inside">
+                    <li><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_rescue.jpg" class="abil-icon-sm inline" alt=""> Abrazo Verde en el objetivo bajo (con Ysera potencia el siguiente Aliento Onírico).</li>
+                    <li><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_rescue.jpg" class="abil-icon-sm inline" alt=""> Abrazo Verde consumiendo Eco para burst rápido en varios objetivos.</li>
+                    <li><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_reversion.jpg" class="abil-icon-sm inline" alt=""> Reversión + Hora dorada muy fuerte tras daño reciente.</li>
+                </ul>
+            </div>
+
+            <div class="bg-slate-800/90 rounded-xl p-5 border-l-4 border-l-purple-500">
+                <h4 class="font-bold text-purple-200 flex items-center gap-2"><i data-lucide="zap" class="w-4 h-4"></i> Emergencia / Te quedas atrás</h4>
+                <ul class="mt-2 text-sm text-slate-300 space-y-1 list-disc list-inside">
+                    <li><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_rewind.jpg" class="abil-icon-sm inline" alt=""> <strong>Rebobinar</strong> tras burst muy pesado (daño últimos 5s). No retengas demasiado.</li>
+                    <li><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_stasis.jpg" class="abil-icon-sm inline" alt=""> Estasis reactivado si lo tenías guardado.</li>
+                    <li data-hero="chrono"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_tipthescales.jpg" class="abil-icon-sm inline" alt=""> Inclinar la balanza + <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_dreambreath.jpg" class="abil-icon-sm inline" alt=""> Aliento Onírico R3 para burst instantáneo (Estallido temporal potencia la rampa).</li>
+                    <li data-hero="chrono"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_livingflame.jpg" class="abil-icon-sm inline" alt=""> Llama Crono aporta sanación extra; útil cuando falta esencia.</li>
+                    <li data-hero="flame"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_firebreath.jpg" class="abil-icon-sm inline" alt=""> Aliento de Fuego + <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_rescue.jpg" class="abil-icon-sm inline" alt=""> Abrazo Verde (Consumir Llama) para burst en objetivo bajo.</li>
+                    <li><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_emeraldblossom.jpg" class="abil-icon-sm inline" alt=""> Flor Esmeralda sin miedo: en Midnight es fuerte y no consume Eco.</li>
+                </ul>
+            </div>
+
+            <div class="bg-slate-800/90 rounded-xl p-5 border-l-4 border-l-slate-500">
+                <h4 class="font-bold text-slate-200 flex items-center gap-2"><i data-lucide="shield" class="w-4 h-4"></i> Mitigación previa</h4>
+                <ul class="mt-2 text-sm text-slate-300 space-y-1 list-disc list-inside">
+                    <li><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_hoverblack.jpg" class="abil-icon-sm inline" alt=""> <strong>Céfiro</strong> antes de hits AoE conocidos (-20% daño área).</li>
+                    <li><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_temporalanomaly.jpg" class="abil-icon-sm inline" alt=""> Anomalía Temporal para escudos antes del impacto.</li>
+                    <li><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_temporalanomaly.jpg" class="abil-icon-sm inline" alt=""> Dilatación temporal en objetivo que recibirá burst concentrado.</li>
+                    <li data-hero="chrono"><span class="tag-chrono">Cronoguarda</span> <strong>Warp:</strong> reduce CD de Planear; durante desplazamiento mantienes los hechizos.</li>
+                </ul>
+            </div>
+
+            <div class="bg-slate-800/90 rounded-xl p-5 border-l-4 border-l-green-500">
+                <h4 class="font-bold text-green-200 flex items-center gap-2"><i data-lucide="refresh-cw" class="w-4 h-4"></i> Filler / Sin daño activo</h4>
+                <ul class="mt-2 text-sm text-slate-300 space-y-1 list-disc list-inside">
+                    <li>Mantener <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_temporalanomaly.jpg" class="abil-icon-sm inline" alt=""> Anomalía Temporal y <img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_dreambreath.jpg" class="abil-icon-sm inline" alt=""> Aliento Onírico en CD.</li>
+                    <li data-hero="chrono"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_tipthescales.jpg" class="abil-icon-sm inline" alt=""> Inclinar la balanza lo más posible (Chronoboon -30s CD; Estallido temporal potencia la rampa).</li>
+                    <li data-hero="chrono"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_livingflame.jpg" class="abil-icon-sm inline" alt=""> Llama viviente (+ Llama Crono aporta sanación extra).</li>
+                    <li data-hero="flame"><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_firebreath.jpg" class="abil-icon-sm inline" alt=""> Aliento de Fuego en CD (Salto de llamas + Esencia explosiva).</li>
+                    <li><img src="https://wow.zamimg.com/images/wow/icons/large/ability_evoker_emeraldblossom.jpg" class="abil-icon-sm inline" alt=""> Consumir Esencia explosiva con Flor Esmeralda para Ecos gemelos.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.switchTab = (tab) => {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.add('inactive');
+            });
+            const activeBtn = document.getElementById(`btn-${tab}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('inactive');
+                activeBtn.classList.add('active');
+            }
+        };
+
+        window.setHero = (hero) => {
+            document.body.classList.remove('hero-chrono', 'hero-flame');
+            document.body.classList.add(`hero-${hero}`);
+            document.querySelectorAll('.hero-selector .hero-opt').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`hero-btn-${hero}`).classList.add('active');
+            const badge = document.getElementById('badge-hero');
+            const desc = document.getElementById('build-desc');
+            if (hero === 'chrono') {
+                badge.className = 'tag-chrono';
+                badge.textContent = 'Crono';
+                badge.title = 'Cronoguarda';
+                desc.innerHTML = 'Build asumida: <strong>nivel 90</strong>, talentos heroicos <strong>Cronoguarda</strong> completos (Llama Crono · Estallido temporal · Chronoboon · Hilos del destino · Estela · Warp), <strong>Bendición de Merithra</strong> ápice.';
+            } else {
+                badge.className = 'tag-flame';
+                badge.textContent = 'Fuego';
+                badge.title = 'Moldeallamas';
+                desc.innerHTML = 'Build asumida: <strong>nivel 90</strong>, talentos heroicos <strong>Moldeallamas</strong> completos (Consumir Llama · Salto de llamas · Brasas · Legacy of the Lifebinder), <strong>Bendición de Merithra</strong> ápice.';
+            }
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        };
+
+        document.addEventListener('DOMContentLoaded', () => { if (typeof lucide !== 'undefined') lucide.createIcons(); });
+    </script>
+</body>
+</html>
