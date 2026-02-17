@@ -44,7 +44,6 @@
         .hero-selector .hero-opt.chrono.active { background: #eab308; color: #0f172a; border-color: #a16207; }
         .hero-selector .hero-opt.flame.active { background: #ef4444; color: white; border-color: #b91c1c; }
 
-        .header-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
 
         [data-hero="chrono"], [data-hero="flame"] { display: revert; }
         body.hero-flame [data-hero="chrono"] { display: none !important; }
@@ -56,46 +55,45 @@
 <body class="p-4 md:p-8 max-w-6xl mx-auto pb-32 hero-chrono">
 
     <!-- HEADER -->
-    <header class="mb-6">
-        <!-- Barra superior compacta -->
-        <div class="header-bar border-b border-slate-600/80 pb-4">
-            <h1 class="text-xl md:text-2xl font-black text-white flex items-center gap-2 shrink-0">
-                <i data-lucide="dragon" class="text-teal-400 w-6 h-6"></i>
-                <span>Evocador Pres.</span>
-            </h1>
-            <div class="flex items-center gap-1.5 flex-wrap">
-                <span class="ysera-badge text-[0.6rem] py-1 px-2">Ysera R3</span>
-                <span id="badge-hero" class="tag-chrono text-[0.6rem] py-1 px-2" title="Cronoguarda">Crono</span>
-                <span class="tag-apex text-[0.6rem] py-1 px-2">Merithra</span>
-                <span class="text-[0.6rem] text-slate-500">N90</span>
+    <header class="mb-8">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6 border-b border-slate-600/80 pb-6">
+            <div>
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-2">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="ysera-badge">Llamada de Ysera R3 ✓</span>
+                        <span id="badge-hero" class="tag-chrono">Cronoguarda ✓</span>
+                        <span class="tag-apex">Bendición de Merithra ✓</span>
+                        <span class="text-xs text-slate-500 font-normal">Nivel 90</span>
+                    </div>
+                    <div class="hero-selector flex gap-1 p-1.5 bg-slate-800/80 rounded-lg border border-slate-600 w-fit">
+                        <button onclick="setHero('chrono')" id="hero-btn-chrono" class="hero-opt chrono active px-4 py-2 rounded-md font-bold text-sm border flex items-center gap-2">
+                            <i data-lucide="clock" class="w-4 h-4"></i> Cronoguarda
+                        </button>
+                        <button onclick="setHero('flame')" id="hero-btn-flame" class="hero-opt flame px-4 py-2 rounded-md font-bold text-sm border flex items-center gap-2">
+                            <i data-lucide="flame" class="w-4 h-4"></i> Moldeallamas
+                        </button>
+                    </div>
+                </div>
+                <h1 class="text-3xl font-black text-white flex items-center gap-3">
+                    <i data-lucide="dragon" class="text-teal-400"></i>
+                    Evocador Preservación
+                </h1>
+                <p class="text-slate-400 text-sm mt-1">Simbiosis, Talentos & Rotaciones — Midnight Pre-Patch 12.0.1 (Feb 2026)</p>
+                <p id="build-desc" class="text-xs text-slate-500 mt-1">Build asumida: <strong>nivel 90</strong>, talentos heroicos <strong>Cronoguarda</strong> completos, <strong>Bendición de Merithra</strong> ápice (proc 20% Reversión; flor 250% p. + 4 aliados 30 m).</p>
             </div>
-            <div class="hero-selector flex gap-0.5 p-0.5 bg-slate-800/80 rounded border border-slate-600">
-                <button onclick="setHero('chrono')" id="hero-btn-chrono" class="hero-opt chrono active rounded px-2 py-1 font-bold border flex items-center gap-1 text-xs" title="Cronoguarda">
-                    <i data-lucide="clock" class="w-4 h-4 shrink-0"></i>
-                    <span>Crono</span>
+
+            <nav class="flex gap-2 bg-slate-800/80 p-1.5 rounded-lg border border-slate-600">
+                <button onclick="switchTab('habilidades')" id="btn-habilidades" class="nav-btn active px-4 py-2 rounded-md font-bold text-sm transition-all flex items-center gap-2">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i> Habilidades
                 </button>
-                <button onclick="setHero('flame')" id="hero-btn-flame" class="hero-opt flame rounded px-2 py-1 font-bold border flex items-center gap-1 text-xs" title="Moldeallamas">
-                    <i data-lucide="flame" class="w-4 h-4 shrink-0"></i>
-                    <span>Fuego</span>
+                <button onclick="switchTab('combos')" id="btn-combos" class="nav-btn inactive px-4 py-2 rounded-md font-bold text-sm transition-all flex items-center gap-2">
+                    <i data-lucide="git-branch" class="w-4 h-4"></i> Combos
                 </button>
-            </div>
-            <div class="flex-1 min-w-0"></div>
-            <nav class="flex gap-1 bg-slate-800/80 p-1 rounded-lg border border-slate-600 shrink-0">
-                <button onclick="switchTab('habilidades')" id="btn-habilidades" class="nav-btn active rounded px-2 py-1.5 text-xs font-bold transition-all flex items-center gap-1.5">
-                    <i data-lucide="sparkles" class="w-4 h-4 shrink-0"></i>
-                    <span>Habs</span>
-                </button>
-                <button onclick="switchTab('combos')" id="btn-combos" class="nav-btn inactive rounded px-2 py-1.5 text-xs font-bold transition-all flex items-center gap-1.5">
-                    <i data-lucide="git-branch" class="w-4 h-4 shrink-0"></i>
-                    <span>Combos</span>
-                </button>
-                <button onclick="switchTab('momentos')" id="btn-momentos" class="nav-btn inactive rounded px-2 py-1.5 text-xs font-bold transition-all flex items-center gap-1.5">
-                    <i data-lucide="clock" class="w-4 h-4 shrink-0"></i>
-                    <span>Cuándo</span>
+                <button onclick="switchTab('momentos')" id="btn-momentos" class="nav-btn inactive px-4 py-2 rounded-md font-bold text-sm transition-all flex items-center gap-2">
+                    <i data-lucide="clock" class="w-4 h-4"></i> ¿Qué hacer cuándo?
                 </button>
             </nav>
         </div>
-        <p id="build-desc" class="text-[0.65rem] text-slate-500 mt-2 leading-tight">Build asumida: <strong>nivel 90</strong>, talentos heroicos <strong>Cronoguarda</strong> completos, <strong>Bendición de Merithra</strong> ápice.</p>
     </header>
 
     <!-- PESTAÑA 1: HABILIDADES (con sinergias) -->
@@ -675,13 +673,11 @@
             const desc = document.getElementById('build-desc');
             if (hero === 'chrono') {
                 badge.className = 'tag-chrono';
-                badge.textContent = 'Crono';
-                badge.title = 'Cronoguarda';
+                badge.textContent = 'Cronoguarda ✓';
                 desc.innerHTML = 'Build asumida: <strong>nivel 90</strong>, talentos heroicos <strong>Cronoguarda</strong> completos (Llama Crono · Estallido temporal · Chronoboon · Hilos del destino · Estela · Warp), <strong>Bendición de Merithra</strong> ápice.';
             } else {
                 badge.className = 'tag-flame';
-                badge.textContent = 'Fuego';
-                badge.title = 'Moldeallamas';
+                badge.textContent = 'Moldeallamas ✓';
                 desc.innerHTML = 'Build asumida: <strong>nivel 90</strong>, talentos heroicos <strong>Moldeallamas</strong> completos (Consumir Llama · Salto de llamas · Brasas · Legacy of the Lifebinder), <strong>Bendición de Merithra</strong> ápice.';
             }
             if (typeof lucide !== 'undefined') lucide.createIcons();
